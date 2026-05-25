@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from './AppLayout';
 import AppSidebar from './AppSidebar';
 import TeacherStats from './TeacherStats';
@@ -42,8 +42,7 @@ export default function TeacherDashboardContent() {
 
       {/* Tabs */}
       <div className="mt-6 card-soft p-6">
-        <TabsNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-        <div className="mt-5">
+<TabsNav tabs={tabs} activeTab={activeTab} onTabChange={(id) => setActiveTab(id as TabId)} />        <div className="mt-5">
           {activeTab === 'materials' && <MaterialsTab />}
           {activeTab === 'quizzes' && <QuizzesTab />}
           {activeTab === 'students' && <StudentsTab />}

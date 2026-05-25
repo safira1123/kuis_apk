@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Plus, Trash2, Clock, Calendar, ChevronDown, ChevronUp, X, Save, PlusCircle, MinusCircle } from 'lucide-react';
 import ConfirmModal from '../../ConfirmModal';
@@ -106,11 +106,27 @@ const INITIAL_QUIZZES: Quiz[] = [
 ];
 
 export default function QuizzesTab() {
+  // 1. Inisialisasi state dengan aman
   const [quizzes, setQuizzes] = useState<Quiz[]>(INITIAL_QUIZZES);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // 2. Load data dari localStorage saat pertama kali komponen dibuka
+  useEffect(() => {
+    const savedQuizzes = localStorage.getItem('quiz_lms_data');
+    if (savedQuizzes) {
+      setQuizzes(JSON.parse(savedQuizzes));
+    }
+  }, []);
+
+  // 3. Simpan data ke localStorage tiap kali state 'quizzes' berubah (Tambah/Hapus/Edit)
+  useEffect(() => {
+    if (quizzes !== INITIAL_QUIZZES) {
+      localStorage.setItem('quiz_lms_data', JSON.stringify(quizzes));
+    }
+  }, [quizzes]);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<QuizForm>({
     defaultValues: {
@@ -132,7 +148,6 @@ export default function QuizzesTab() {
     setShowForm(true);
   };
 
-  // Backend integration point: POST/PUT /api/quizzes
   const onSubmit = (data: QuizForm) => {
     if (editingId) {
       setQuizzes(prev => prev.map(q => q.id === editingId ? { ...q, ...data } : q));
