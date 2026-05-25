@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Plus, Edit2, Trash2, Eye, X, Save } from 'lucide-react';
 import ConfirmModal from '../../ConfirmModal';
@@ -36,7 +36,15 @@ const INITIAL_MATERIALS: Material[] = [
 ];
 
 export default function MaterialsTab() {
-  const [materials, setMaterials] = useState<Material[]>(INITIAL_MATERIALS);
+  // 1. KOTAK AJAIB: Mengambil data dari browser saat pertama kali dibuka
+  const [materials, setMaterials] = useState<Material[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('materials_lms_data');
+      return saved ? JSON.parse(saved) : INITIAL_MATERIALS;
+    }
+    return INITIAL_MATERIALS;
+  });
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -45,6 +53,11 @@ export default function MaterialsTab() {
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<MaterialForm>({
     defaultValues: { status: 'published' },
   });
+
+  // 2. AUTO-SAVE: Menyimpan data otomatis ke browser setiap kali ada data materi yang ditambah, diedit, atau dihapus
+  useEffect(() => {
+    localStorage.setItem('materials_lms_data', JSON.stringify(materials));
+  }, [materials]);
 
   const openCreate = () => {
     reset({ title: '', subject: '', content: '', grade: 'Kelas 7', status: 'published' });
@@ -62,7 +75,6 @@ export default function MaterialsTab() {
     setShowForm(true);
   };
 
-  // Backend integration point: POST/PUT /api/materials
   const onSubmit = (data: MaterialForm) => {
     if (editingId) {
       setMaterials(prev => prev.map(m => m.id === editingId ? { ...m, ...data } : m));
@@ -79,7 +91,6 @@ export default function MaterialsTab() {
     reset();
   };
 
-  // Backend integration point: DELETE /api/materials/:id
   const confirmDelete = () => {
     if (deleteId) {
       setMaterials(prev => prev.filter(m => m.id !== deleteId));
