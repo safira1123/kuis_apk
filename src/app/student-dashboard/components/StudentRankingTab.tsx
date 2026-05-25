@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, TrendingDown, Minus, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const RankingChart = dynamic(() => import('../../RankingChart'), { ssr: false });
 
-const RANKING_DATA = [
+const INITIAL_RANKING_DATA = [
   { id: 'stu-003', rank: 1, prevRank: 1, name: 'Maryam Sari', grade: 'Kelas 7B', totalScore: 450, quizCompleted: 5, avgScore: 90, isMe: false },
   { id: 'stu-011', rank: 2, prevRank: 3, name: 'Ruqayyah Dewi', grade: 'Kelas 7A', totalScore: 445, quizCompleted: 5, avgScore: 89, isMe: false },
   { id: 'stu-001', rank: 3, prevRank: 2, name: 'Fatimah Az-Zahra', grade: 'Kelas 7A', totalScore: 420, quizCompleted: 5, avgScore: 84, isMe: true },
@@ -29,9 +29,15 @@ const SCORE_HISTORY = [
   { quiz: 'Kuis 5', score: 88, classAvg: 83 },
 ];
 
-const me = RANKING_DATA.find(s => s.isMe)!;
-
 export default function StudentRankingTab() {
+  const [rankingData, setRankingData] = useState(INITIAL_RANKING_DATA);
+
+  const handleDeleteStudent = (id: string) => {
+    setRankingData(prevData => prevData.filter(student => student.id !== id));
+  };
+
+  const me = rankingData.find(s => s.isMe);
+
   const getRankTrend = (curr: number, prev: number) => {
     if (curr < prev) return { icon: TrendingUp, label: `+${prev - curr}`, color: 'text-primary-foreground' };
     if (curr > prev) return { icon: TrendingDown, label: `-${curr - prev}`, color: 'text-red-500' };
@@ -41,27 +47,29 @@ export default function StudentRankingTab() {
   return (
     <div>
       {/* My Rank Card */}
-      <div className="card-gold p-5 mb-5 flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-white bg-opacity-30 flex items-center justify-center font-black text-2xl text-accent-foreground flex-shrink-0">
-          #{me.rank}
-        </div>
-        <div className="flex-1">
-          <p className="text-xs font-bold text-accent-foreground opacity-75 uppercase tracking-wider mb-0.5">Peringkat Saya</p>
-          <h3 className="font-bold text-accent-foreground text-xl">{me.name}</h3>
-          <div className="flex items-center gap-3 text-sm text-accent-foreground opacity-80 mt-1 flex-wrap">
-            <span>⭐ {me.totalScore} poin total</span>
-            <span>📊 Avg: {me.avgScore}</span>
-            <span>✅ {me.quizCompleted}/5 kuis</span>
-            <span className="flex items-center gap-1">
-              <TrendingDown size={13} /> Turun 1 peringkat minggu ini
-            </span>
+      {me && (
+        <div className="card-gold p-5 mb-5 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-white bg-opacity-30 flex items-center justify-center font-black text-2xl text-accent-foreground flex-shrink-0">
+            #{me.rank}
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-accent-foreground opacity-75 uppercase tracking-wider mb-0.5">Peringkat Saya</p>
+            <h3 className="font-bold text-accent-foreground text-xl">{me.name}</h3>
+            <div className="flex items-center gap-3 text-sm text-accent-foreground opacity-80 mt-1 flex-wrap">
+              <span>⭐ {me.totalScore} poin total</span>
+              <span>📊 Avg: {me.avgScore}</span>
+              <span>✅ {me.quizCompleted}/5 kuis</span>
+              <span className="flex items-center gap-1">
+                <TrendingDown size={13} /> Turun 1 peringkat minggu ini
+              </span>
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-4xl">🥉</p>
+            <p className="text-xs text-accent-foreground font-bold mt-1">Terus semangat!</p>
           </div>
         </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-4xl">🥉</p>
-          <p className="text-xs text-accent-foreground font-bold mt-1">Terus semangat!</p>
-        </div>
-      </div>
+      )}
 
       {/* Score History Chart */}
       <div className="card-soft p-4 mb-5">
@@ -84,10 +92,11 @@ export default function StudentRankingTab() {
                 <th className="text-center py-3 px-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Avg</th>
                 <th className="text-right py-3 px-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Poin</th>
                 <th className="text-center py-3 px-3 text-xs font-bold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Tren</th>
+                <th className="text-center py-3 px-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {RANKING_DATA.map((student, i) => {
+              {rankingData.map((student, i) => {
                 const trend = getRankTrend(student.rank, student.prevRank);
                 const TrendIcon = trend.icon;
                 const medal = student.rank === 1 ? '🥇' : student.rank === 2 ? '🥈' : student.rank === 3 ? '🥉' : null;
@@ -127,6 +136,15 @@ export default function StudentRankingTab() {
                         <TrendIcon size={12} />
                         {trend.label}
                       </div>
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      <button 
+                        onClick={() => handleDeleteStudent(student.id)}
+                        className="text-muted-foreground hover:text-red-500 p-1 rounded-lg transition-colors"
+                        title="Hapus Murid"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </td>
                   </tr>
                 );
